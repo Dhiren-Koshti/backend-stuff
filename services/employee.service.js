@@ -1,49 +1,23 @@
 const crypto = require("crypto");
 const AppError = require("../utils/AppError");
+const employeeRepository = require("../repositories/employee.repository");
 
-// In-memory array acting as our database
-const employees = [
-  {
-    id: "emp_1",
-    name: "Alice Johnson",
-    email: "alice.johnson@example.com",
-    department: "Engineering",
-    salary: 85000,
-    createdAt: new Date("2026-01-15T08:30:00.000Z").toISOString(),
-  },
-  {
-    id: "emp_2",
-    name: "Bob Smith",
-    email: "bob.smith@example.com",
-    department: "Engineering",
-    salary: 92000,
-    createdAt: new Date("2026-02-10T09:15:00.000Z").toISOString(),
-  },
-  {
-    id: "emp_3",
-    name: "Carol White",
-    email: "carol.white@example.com",
-    department: "Human Resources",
-    salary: 78000,
-    createdAt: new Date("2026-03-01T10:00:00.000Z").toISOString(),
-  },
-];
+/**
+ * Service Layer: Business logic, validation rules, domain orchestration.
+ * Completely decoupled from storage mechanism.
+ */
 
 const createEmployee = async (employeeData = {}) => {
   const normalizedEmail = employeeData?.email?.trim().toLowerCase();
 
-  // Check for duplicate employee by email
-  const existingEmployee = employees.find(
-    (emp) => emp.email.toLowerCase() === normalizedEmail
-  );
-
+  // Business Rule: Check for duplicate employee by email
+  const existingEmployee = await employeeRepository.findByEmail(normalizedEmail);
   if (existingEmployee) {
     throw new AppError("An employee with this email already exists", 409);
   }
 
-  // Generate unique ID using crypto.randomUUID()
+  // Domain Logic: Generate unique employee ID and creation timestamp
   const uniqueId = `emp_${crypto.randomUUID()}`;
-
   const newEmployee = {
     id: uniqueId,
     name: employeeData?.name?.trim(),
@@ -53,16 +27,16 @@ const createEmployee = async (employeeData = {}) => {
     createdAt: new Date().toISOString(),
   };
 
-  employees.push(newEmployee);
-  return newEmployee;
+  // Delegate data storage to the repository
+  return await employeeRepository.create(newEmployee);
 };
 
 const getAllEmployees = async () => {
-  return [...employees];
+  return await employeeRepository.findAll();
 };
 
 const getEmployeeById = async (id) => {
-  const employee = employees.find((emp) => emp.id === id);
+  const employee = await employeeRepository.findById(id);
 
   if (!employee) {
     throw new AppError(`Employee not found with ID: ${id}`, 404);

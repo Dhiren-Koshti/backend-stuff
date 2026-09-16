@@ -3,8 +3,17 @@
  * Centralized error handler for all application errors.
  */
 const errorHandler = (err, req, res, next) => {
-  const statusCode = err.statusCode || 500;
-  const status = err.status || "error";
+  // Handle Express body-parser malformed JSON syntax errors gracefully
+  if (err instanceof SyntaxError && (err.status === 400 || err.statusCode === 400) && "body" in err) {
+    return res.status(400).json({
+      success: false,
+      status: "fail",
+      message: "Malformed JSON payload in request body",
+    });
+  }
+
+  const statusCode = err.statusCode || (typeof err.status === "number" ? err.status : 500);
+  const status = typeof err.status === "string" ? err.status : `${statusCode}`.startsWith("4") ? "fail" : "error";
 
   const response = {
     success: false,

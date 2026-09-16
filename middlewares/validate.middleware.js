@@ -117,15 +117,17 @@ const validate = (schema) => {
 const validateEmployeeId = (req, res, next) => {
   const { id } = req.params;
 
-  if (
-    !id ||
-    typeof id !== "string" ||
-    !id.trim().startsWith("emp_") ||
-    id.trim().slice(4).trim().length === 0
-  ) {
+  if (!id || typeof id !== "string") {
     return next(new AppError("Invalid employee ID", 400));
   }
 
+  const trimmedId = id.trim();
+
+  if (!trimmedId.startsWith("emp_") || trimmedId.slice(4).trim().length === 0) {
+    return next(new AppError("Invalid employee ID", 400));
+  }
+
+  req.params.id = trimmedId;
   next();
 };
 
