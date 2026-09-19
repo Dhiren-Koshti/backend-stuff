@@ -77,9 +77,52 @@ const create = async (employeeData) => {
   return employeeData;
 };
 
+/**
+ * Update an existing employee record
+ * @param {string} id - Employee ID
+ * @param {Object} updatedData - Object containing fields to update
+ * @returns {Promise<Object|null>} Updated employee or null
+ */
+const update = async (id, updatedData) => {
+  if (!id) return null;
+  const cleanId = typeof id === "string" ? id.trim() : id;
+  const index = employees.findIndex((emp) => emp.id === cleanId);
+
+  if (index === -1) {
+    return null;
+  }
+
+  employees[index] = {
+    ...employees[index],
+    ...updatedData,
+  };
+
+  return { ...employees[index] };
+};
+
+/**
+ * Delete an employee record by ID
+ * @param {string} id - Employee ID
+ * @returns {Promise<Object|null>} Deleted employee or null
+ */
+const deleteById = async (id) => {
+  if (!id) return null;
+  const cleanId = typeof id === "string" ? id.trim() : id;
+  const index = employees.findIndex((emp) => emp.id === cleanId);
+
+  if (index === -1) {
+    return null;
+  }
+
+  const [deletedEmployee] = employees.splice(index, 1);
+  return { ...deletedEmployee };
+};
+
 module.exports = {
   findAll,
   findById,
   findByEmail,
   create,
+  update,
+  deleteById,
 };

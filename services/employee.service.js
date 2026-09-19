@@ -11,7 +11,9 @@ const createEmployee = async (employeeData = {}) => {
   const normalizedEmail = employeeData?.email?.trim().toLowerCase();
 
   // Business Rule: Check for duplicate employee by email
-  const existingEmployee = await employeeRepository.findByEmail(normalizedEmail);
+  const existingEmployee = await employeeRepository.findByEmail(
+    normalizedEmail
+  );
   if (existingEmployee) {
     throw new AppError("An employee with this email already exists", 409);
   }
@@ -45,8 +47,65 @@ const getEmployeeById = async (id) => {
   return employee;
 };
 
+const updateEmployee = async (id, updateData = {}) => {
+  // 1. Verify that the employee exists
+  const existingEmployee = await employeeRepository.findById(id);
+  if (!existingEmployee) {
+    throw new AppError(`Employee not found with ID: ${id}`, 404);
+  }
+
+  // 2. Prepare fields to update
+  const sanitizedUpdates = {};
+
+  if (updateData.name !== undefined) {
+    sanitizedUpdates.name = updateData.name.trim();
+  }
+
+  if (updateData.department !== undefined) {
+    sanitizedUpdates.department = updateData.department.trim();
+  }
+
+  if (updateData.salary !== undefined) {
+    sanitizedUpdates.salary = updateData.salary;
+  }
+
+  // 3. If email is being updated, verify uniqueness across other employees
+  if (updateData.email !== undefined) {
+    const normalizedEmail = updateData.email.trim().toLowerCase();
+
+    // Only check conflict if it differs from current email
+    if (normalizedEmail !== existingEmployee.email.toLowerCase()) {
+      const emailInUse = await employeeRepository.findByEmail(normalizedEmail);
+      if (emailInUse && emailInUse.id !== existingEmployee.id) {
+        throw new AppError("An employee with this email already exists", 409);
+      }
+    }
+
+    sanitizedUpdates.email = normalizedEmail;
+  }
+
+  // 4. Attach updatedAt timestamp
+  sanitizedUpdates.updatedAt = new Date().toISOString();
+
+  // 5. Delegate update to repository
+  return await employeeRepository.update(id, sanitizedUpdates);
+};
+
+const deleteEmployee = async (id) => {
+  // 1. Verify that the employee exists
+  const existingEmployee = await employeeRepository.findById(id);
+  if (!existingEmployee) {
+    throw new AppError(`Employee not found with ID: ${id}`, 404);
+  }
+
+  // 2. Delegate deletion to repository
+  return await employeeRepository.deleteById(id);
+};
+
 module.exports = {
   createEmployee,
   getAllEmployees,
   getEmployeeById,
+  updateEmployee,
+  deleteEmployee,
 };

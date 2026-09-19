@@ -37,8 +37,35 @@ const getEmployeeById = asyncHandler(async (req, res) => {
   });
 });
 
+// PATCH /employees/:id
+const updateEmployee = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const updateData = req.body;
+  const updatedEmployee = await employeeService.updateEmployee(id, updateData);
+
+  return res.status(200).json({
+    success: true,
+    message: "Employee updated successfully",
+    data: updatedEmployee,
+  });
+});
+
+// DELETE /employees/:id
+const deleteEmployee = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const deletedEmployee = await employeeService.deleteEmployee(id);
+
+  return res.status(200).json({
+    success: true,
+    message: "Employee deleted successfully",
+    data: deletedEmployee,
+  });
+});
+
 module.exports = {
   createEmployee,
   getAllEmployees,
   getEmployeeById,
+  updateEmployee,
+  deleteEmployee,
 };

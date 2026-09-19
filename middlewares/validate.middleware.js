@@ -32,7 +32,9 @@ const validate = (schema) => {
           {
             field: "body",
             message: "Request body is empty",
-            expected: `A JSON object containing: ${schema.requiredFields.join(", ")}`,
+            expected: `A JSON object containing: ${schema.requiredFields.join(
+              ", "
+            )}`,
           },
         ])
       );
@@ -69,8 +71,18 @@ const validate = (schema) => {
       for (const [field, rules] of Object.entries(schema.fieldRules)) {
         const value = body[field];
 
-        // Skip if value is not provided (required field checks already handle missing fields)
-        if (value === undefined || value === null) {
+        // Skip if field was not provided in request body
+        if (value === undefined) {
+          continue;
+        }
+
+        // Reject if explicitly provided as null
+        if (value === null) {
+          errors.push({
+            field,
+            message: `'${field}' cannot be null`,
+            expected: rules.type || "non-null value",
+          });
           continue;
         }
 
